@@ -1,4 +1,3 @@
-// backend/src/services/youtubeService.js
 import YouTubeMusic from "ytmusic-api";
 import dotenv from "dotenv";
 
