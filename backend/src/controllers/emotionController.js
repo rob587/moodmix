@@ -76,3 +76,41 @@ export const analyzeEmotion = async (req, res) => {
     });
   }
 };
+
+export const getHistory = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const result = await pool.query(
+      `SELECT 
+        ms.id,
+        ms.mood,
+        ms.stress,
+        ms.focus,
+        ms.energy,
+        ms.valence,
+        ms.created_at,
+        p.id as playlist_id,
+        p.tracks as playlist_tracks
+      FROM mood_scans ms
+      LEFT JOIN playlists p ON ms.id = p.mood_scan_id
+      INNER JOIN users u ON ms.user_id = u.id
+      WHERE u.username = $1 OR u.email = $1
+      ORDER BY ms.created_at DESC
+      LIMIT $2`,
+      [userId, limit],
+    );
+
+    res.json({
+      success: true,
+      history: result.rows,
+    });
+  } catch (error) {
+    console.error("ERRORE in getHistory:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
+  }
+};
