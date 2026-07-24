@@ -125,3 +125,47 @@ export const getPlaylists = async (req, res) => {
     });
   }
 };
+
+export const getPlaylistById = async (req, res) => {
+  try {
+    const playlistId = req.params.id;
+    const userId = req.query.userId || "roberto";
+
+    const result = await pool.query(
+      `SELECT 
+        p.id,
+        p.mood,
+        p.genres,
+        p.tracks,
+        p.created_at,
+        ms.mood as scan_mood,
+        ms.stress,
+        ms.focus,
+        ms.energy,
+        ms.valence
+      FROM playlists p
+      LEFT JOIN mood_scans ms ON p.mood_scan_id = ms.id
+      INNER JOIN users u ON p.user_id = u.id
+      WHERE p.id = $1 AND (u.username = $2 OR u.email = $2)`,
+      [playlistId, userId],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Playlist non trovata",
+      });
+    }
+
+    res.json({
+      success: true,
+      playlist: result.rows[0],
+    });
+  } catch (error) {
+    console.error("ERRORE in getPlaylistById:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
+  }
+};
