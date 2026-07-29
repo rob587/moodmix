@@ -29,7 +29,64 @@ function App() {
     setError(null);
   };
 
-  return <></>;
+  const showError = (message) => {
+    setError(message);
+    setTimeout(() => setError(null), 5000);
+  };
+
+  return (
+    <>
+      <div className="app-container">
+        {/* Header */}
+        <header className="app-header glass-card">
+          <h1 className="app-title neon-text">🎵 MoodMix</h1>
+          <p className="app-subtitle">
+            {currentStep === "scan" && "Scansiona il tuo umore"}
+            {currentStep === "mood" && "Ecco il tuo umore!"}
+            {currentStep === "playlist" && "La tua playlist personalizzata"}
+          </p>
+        </header>
+
+        {/* Main content */}
+        <main className="app-main">
+          {error && (
+            <div className="error-banner">
+              {error}
+              <button onClick={() => setError(null)}>✕</button>
+            </div>
+          )}
+
+          {currentStep === "scan" && (
+            <ScanFace
+              onScanComplete={handleScanComplete}
+              onError={showError}
+              isLoading={isLoading}
+              setIsLoading={setIsLoading}
+            />
+          )}
+
+          {currentStep === "mood" && scanResult && (
+            <MoodResult
+              scanResult={scanResult}
+              onGeneratePlaylist={handlePlaylistGenerated}
+              onReset={handleReset}
+              isLoading={isLoading}
+              setIsLoading={setIsLoading}
+              onError={showError}
+            />
+          )}
+
+          {currentStep === "playlist" && playlist && (
+            <PlaylistDisplay playlist={playlist} onReset={handleReset} />
+          )}
+        </main>
+
+        <footer className="app-footer">
+          <p>MoodMix — Scansiona il volto, ascolta la tua playlist</p>
+        </footer>
+      </div>
+    </>
+  );
 }
 
 export default App;
