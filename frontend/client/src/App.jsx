@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import ScanFace from "./components/ScanFace";
 import MoodResult from "./components/MoodResult";
 import PlaylistDisplay from "./components/PlaylistDisplay";
-import "./App.css";
 
 function App() {
   const [scanResult, setScanResult] = useState(null);
