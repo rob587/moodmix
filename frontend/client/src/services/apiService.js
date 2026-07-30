@@ -61,3 +61,37 @@ export const getHistory = async (userId, limit = 10) => {
     throw error;
   }
 };
+
+export const getPlaylists = async (userId, limit = 10) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/playlist/user/${userId}?limit=${limit}`,
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `Errore HTTP: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Errore getPlaylists:", error);
+    throw error;
+  }
+};
+
+/**
+ * Health check
+ */
+export const healthCheck = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`);
+    if (!response.ok) {
+      throw new Error(`Health check fallita: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Health check fallita:", error);
+    throw error;
+  }
+};
