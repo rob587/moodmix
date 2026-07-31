@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ScanFace from "./components/ScanFace";
-// import MoodResult from "./components/MoodResult";
+import MoodResult from "./components/MoodResult";
 // import PlaylistDisplay from "./components/PlaylistDisplay";
 
 function App() {

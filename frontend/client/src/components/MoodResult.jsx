@@ -230,3 +230,5 @@ const MoodResult = ({
     </div>
   );
 };
+
+export default MoodResult;
