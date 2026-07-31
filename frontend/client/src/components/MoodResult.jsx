@@ -84,4 +84,149 @@ const MoodResult = ({
       setIsLoading(false);
     }
   };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const moodInfo = getMoodInfo(mood);
+
+  return (
+    <div className="mood-result">
+      {/* Mood principale */}
+      <div
+        className="mood-card"
+        style={{
+          background: moodInfo.bg,
+          borderColor: moodInfo.color,
+          borderWidth: "2px",
+          borderStyle: "solid",
+        }}
+      >
+        <div style={{ fontSize: "4rem", textAlign: "center" }}>
+          {moodInfo.emoji}
+        </div>
+        <h2
+          style={{
+            color: moodInfo.color,
+            textAlign: "center",
+            fontSize: "2rem",
+            textTransform: "capitalize",
+            marginTop: "10px",
+          }}
+        >
+          {mood || "Non rilevato"}
+        </h2>
+        <p
+          style={{
+            color: "#9ca3af",
+            textAlign: "center",
+            marginTop: "10px",
+            fontSize: "1rem",
+            lineHeight: "1.6",
+          }}
+        >
+          {moodDescription?.description || "Analisi emotiva completata"}
+        </p>
+        {moodDescription?.motivation && (
+          <p
+            style={{
+              color: "#fcd34d",
+              textAlign: "center",
+              marginTop: "10px",
+              fontStyle: "italic",
+              fontSize: "0.95rem",
+            }}
+          >
+            💫 {moodDescription.motivation}
+          </p>
+        )}
+        <p
+          style={{
+            color: "#4b5563",
+            textAlign: "center",
+            marginTop: "10px",
+            fontSize: "0.8rem",
+          }}
+        >
+          🕐 {formatDate(timestamp)}
+        </p>
+      </div>
+
+      {/* Metriche */}
+      <div className="metrics-grid">
+        <div className="metric-card">
+          <span className="metric-label">Stress</span>
+          <span className="metric-value" style={{ color: "#ef4444" }}>
+            {stress || 0}%
+          </span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Focus</span>
+          <span className="metric-value" style={{ color: "#22d3ee" }}>
+            {focus || 0}%
+          </span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Energia</span>
+          <span className="metric-value" style={{ color: "#fbbf24" }}>
+            {energy || 0}%
+          </span>
+        </div>
+        <div className="metric-card">
+          <span className="metric-label">Valenza</span>
+          <span className="metric-value" style={{ color: "#34d399" }}>
+            {valence || 0}%
+          </span>
+        </div>
+      </div>
+
+      {/* Genere suggerito */}
+      {moodDescription?.suggestedGenre && (
+        <div className="suggested-genre">
+          <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>
+            Genere suggerito:
+          </span>
+          <span
+            style={{
+              color: "#a78bfa",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
+              marginLeft: "10px",
+            }}
+          >
+            🎵 {moodDescription.suggestedGenre}
+          </span>
+        </div>
+      )}
+
+      {/* Pulsanti */}
+      <div className="result-actions">
+        <button
+          className="btn-neon btn-neon-purple"
+          onClick={handleGeneratePlaylist}
+          disabled={isGenerating || isLoading}
+        >
+          {isGenerating ? "Generazione..." : "Genera Playlist"}
+        </button>
+
+        <button
+          className="btn-neon"
+          onClick={onReset}
+          style={{ borderColor: "#6b7280", color: "#6b7280" }}
+          disabled={isGenerating}
+        >
+          🔄 Nuova Scansione
+        </button>
+      </div>
+    </div>
+  );
 };
