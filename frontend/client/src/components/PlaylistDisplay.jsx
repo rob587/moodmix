@@ -26,6 +26,32 @@ const PlaylistDisplay = ({ playlist, onReset }) => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const openOnYouTube = (url) => {
+    if (url) {
+      window.open(url, "_blank");
+    }
+  };
+
+  const togglePlay = (track) => {
+    if (track?.spotifyUrl) {
+      openOnYouTube(track.spotifyUrl);
+      setIsPlaying(true);
+      setTimeout(() => setIsPlaying(false), 1000);
+    }
+  };
+
   return <div></div>;
 };
 
