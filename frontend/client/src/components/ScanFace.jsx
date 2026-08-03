@@ -1,8 +1,13 @@
-// frontend/src/components/ScanFace.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { analyzeEmotion } from "../services/apiService";
 
-const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
+const ScanFace = ({
+  userId,
+  onScanComplete,
+  onError,
+  isLoading,
+  setIsLoading,
+}) => {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -16,33 +21,22 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
   const landmarksHistoryRef = useRef([]);
   const scanIntervalRef = useRef(null);
 
-  // Carica FaceMesh da CDN
   const loadFaceMesh = () => {
     return new Promise((resolve, reject) => {
       if (window.FaceMesh) {
-        console.log("✅ FaceMesh già caricato");
         resolve(window.FaceMesh);
         return;
       }
-
-      console.log("📥 Caricamento FaceMesh da CDN...");
       const script = document.createElement("script");
       script.src =
         "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js";
       script.crossOrigin = "anonymous";
-      script.onload = () => {
-        console.log("✅ FaceMesh loaded from CDN");
-        resolve(window.FaceMesh);
-      };
-      script.onerror = () => {
-        console.error("❌ Errore caricamento FaceMesh");
-        reject(new Error("Impossibile caricare FaceMesh"));
-      };
+      script.onload = () => resolve(window.FaceMesh);
+      script.onerror = () => reject(new Error("Impossibile caricare FaceMesh"));
       document.body.appendChild(script);
     });
   };
 
-  // Calcola metriche dai landmarks
   const calculateMetrics = (landmarks) => {
     if (!landmarks || landmarks.length === 0) return null;
 
@@ -66,23 +60,20 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       if (leftEye.length < 4 || rightEye.length < 4) return 50;
       const leftOpen = distance(leftEye[0], leftEye[4]);
       const rightOpen = distance(rightEye[0], rightEye[4]);
-      const avgOpen = (leftOpen + rightOpen) / 2;
-      return Math.min(Math.round(avgOpen * 200), 100);
+      return Math.min(Math.round(((leftOpen + rightOpen) / 2) * 200), 100);
     };
 
     const getMouthTension = () => {
       const mouthPoints = landmarks.filter((_, i) => MOUTH.includes(i));
       if (mouthPoints.length < 4) return 50;
-      const topLip = mouthPoints[0];
-      const bottomLip = mouthPoints[mouthPoints.length - 1];
-      const mouthOpen = distance(topLip, bottomLip);
+      const mouthOpen = distance(
+        mouthPoints[0],
+        mouthPoints[mouthPoints.length - 1],
+      );
       return Math.max(0, Math.min(100, 100 - mouthOpen * 300));
     };
 
-    const getBlinkRate = () => {
-      const eyeOpen = getEyeOpenness();
-      return eyeOpen < 30 ? 20 : 5;
-    };
+    const getBlinkRate = () => (getEyeOpenness() < 30 ? 20 : 5);
 
     const getHeadPosition = () => {
       const nose = landmarks[1];
@@ -103,33 +94,23 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
     };
   };
 
-  // Avvia la webcam
   const startCamera = async () => {
     try {
       setStatusMessage("📷 Avvio webcam...");
-      console.log("📷 Tentativo avvio webcam...");
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
       });
-
-      console.log("✅ Webcam avviata, stream ottenuto");
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         streamRef.current = stream;
-        console.log("✅ Video in riproduzione");
       }
 
-      // Carica FaceMesh
-      console.log("📥 Caricamento FaceMesh...");
       const FaceMesh = await loadFaceMesh();
-
       const faceMesh = new FaceMesh({
-        locateFile: (file) => {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
-        },
+        locateFile: (file) =>
+          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
       });
 
       faceMesh.setOptions({
@@ -140,17 +121,12 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       });
 
       faceMesh.onResults((results) => {
-        if (
-          results.multiFaceLandmarks &&
-          results.multiFaceLandmarks.length > 0
-        ) {
+        if (results.multiFaceLandmarks?.length > 0) {
           const landmarks = results.multiFaceLandmarks[0];
           const metrics = calculateMetrics(landmarks);
-
           if (metrics) {
             landmarksHistoryRef.current.push(landmarks);
             metricsHistoryRef.current.push(metrics);
-
             if (landmarksHistoryRef.current.length > 60) {
               landmarksHistoryRef.current.shift();
               metricsHistoryRef.current.shift();
@@ -162,30 +138,22 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       faceMeshRef.current = faceMesh;
       setIsCameraReady(true);
       setStatusMessage('✅ Volto rilevato! Premi "Scansiona"');
-      console.log("✅ FaceMesh pronto e in esecuzione");
 
-      // Loop di rilevamento
       const detectLoop = async () => {
         if (videoRef.current && faceMeshRef.current) {
           try {
             await faceMeshRef.current.send({ image: videoRef.current });
-          } catch (err) {
-            // Ignora errori di frame
-          }
+          } catch (err) {}
         }
         animationRef.current = requestAnimationFrame(detectLoop);
       };
-
       detectLoop();
     } catch (error) {
-      console.error("❌ Errore avvio webcam:", error);
-      console.error("❌ Dettaglio:", error.message);
       onError("Errore avvio webcam: " + error.message);
-      setStatusMessage("❌ Errore: " + error.message);
+      setStatusMessage("Errore: " + error.message);
     }
   };
 
-  // Esegui la scansione
   const performScan = () => {
     if (metricsHistoryRef.current.length === 0) {
       onError(
@@ -209,7 +177,6 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       setScanProgress(Math.min(progress, 90));
     }, 200);
 
-    const userId = "roberto";
     const sessionId = `session_${Date.now()}`;
 
     analyzeEmotion({
@@ -221,11 +188,10 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       .then((result) => {
         clearInterval(scanIntervalRef.current);
         setScanProgress(100);
-
         setTimeout(() => {
           setIsLoading(false);
           setIsDetecting(false);
-          setStatusMessage("✅ Scansione completata!");
+          setStatusMessage("Scansione completata!");
           stopCamera();
           onScanComplete(result);
         }, 500);
@@ -235,15 +201,12 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
         setIsLoading(false);
         setIsDetecting(false);
         onError("Errore scansione: " + error.message);
-        setStatusMessage("❌ Errore scansione");
+        setStatusMessage("Errore scansione");
       });
   };
 
   const stopCamera = () => {
-    console.log("🛑 Fermo webcam...");
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -252,19 +215,15 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       faceMeshRef.current.close();
       faceMeshRef.current = null;
     }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
+    if (videoRef.current) videoRef.current.srcObject = null;
     setIsCameraReady(false);
-    setStatusMessage("📷 Webcam fermata");
+    setStatusMessage("Webcam fermata");
   };
 
   useEffect(() => {
     return () => {
       stopCamera();
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-      }
+      if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
     };
   }, []);
 
@@ -331,7 +290,6 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
             >
               {isLoading ? "⏳ Scansione..." : "🧠 Scansiona"}
             </button>
-
             <button
               className="btn-neon"
               onClick={stopCamera}
