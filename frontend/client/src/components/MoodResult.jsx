@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { generatePlaylist } from "../services/apiService";
 
 const MoodResult = ({
+  userId,
   scanResult,
   onGeneratePlaylist,
   onReset,
@@ -31,21 +32,13 @@ const MoodResult = ({
         color: "#fbbf24",
         bg: "rgba(251, 191, 36, 0.1)",
       },
-      stanco: {
-        emoji: "😴",
-        color: "#6b7280",
-        bg: "rgba(107, 114, 128, 0.1)",
-      },
+      stanco: { emoji: "😴", color: "#6b7280", bg: "rgba(107, 114, 128, 0.1)" },
       rilassato: {
         emoji: "😌",
         color: "#34d399",
         bg: "rgba(52, 211, 153, 0.1)",
       },
-      teso: {
-        emoji: "😬",
-        color: "#f97316",
-        bg: "rgba(249, 115, 22, 0.1)",
-      },
+      teso: { emoji: "😬", color: "#f97316", bg: "rgba(249, 115, 22, 0.1)" },
       neutrale: {
         emoji: "😐",
         color: "#9ca3af",
@@ -64,14 +57,12 @@ const MoodResult = ({
   const handleGeneratePlaylist = async () => {
     setIsGenerating(true);
     setIsLoading(true);
-
     try {
       const result = await generatePlaylist({
-        userId: "roberto",
-        mood: mood,
+        userId,
+        mood,
         scanId: analysis?.scanId || null,
       });
-
       if (result.success) {
         onGeneratePlaylist(result.playlist);
       } else {
@@ -87,8 +78,7 @@ const MoodResult = ({
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("it-IT", {
+    return new Date(dateString).toLocaleString("it-IT", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -101,7 +91,6 @@ const MoodResult = ({
 
   return (
     <div className="mood-result">
-      {/* Mood principale */}
       <div
         className="mood-card"
         style={{
@@ -157,11 +146,10 @@ const MoodResult = ({
             fontSize: "0.8rem",
           }}
         >
-          🕐 {formatDate(timestamp)}
+          {formatDate(timestamp)}
         </p>
       </div>
 
-      {/* Metriche */}
       <div className="metrics-grid">
         <div className="metric-card">
           <span className="metric-label">Stress</span>
@@ -189,7 +177,6 @@ const MoodResult = ({
         </div>
       </div>
 
-      {/* Genere suggerito */}
       {moodDescription?.suggestedGenre && (
         <div className="suggested-genre">
           <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>
@@ -203,12 +190,11 @@ const MoodResult = ({
               marginLeft: "10px",
             }}
           >
-            🎵 {moodDescription.suggestedGenre}
+            {moodDescription.suggestedGenre}
           </span>
         </div>
       )}
 
-      {/* Pulsanti */}
       <div className="result-actions">
         <button
           className="btn-neon btn-neon-purple"
@@ -217,14 +203,13 @@ const MoodResult = ({
         >
           {isGenerating ? "Generazione..." : "Genera Playlist"}
         </button>
-
         <button
           className="btn-neon"
           onClick={onReset}
           style={{ borderColor: "#6b7280", color: "#6b7280" }}
           disabled={isGenerating}
         >
-          🔄 Nuova Scansione
+          Nuova Scansione
         </button>
       </div>
     </div>
