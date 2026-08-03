@@ -6,7 +6,7 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
   const [isCameraReady, setIsCameraReady] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  const [statusMessage, setStatusMessage] = useState("Attiva la webcam");
+  const [statusMessage, setStatusMessage] = useState("📷 Attiva la webcam");
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -20,19 +20,22 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
   const loadFaceMesh = () => {
     return new Promise((resolve, reject) => {
       if (window.FaceMesh) {
+        console.log("✅ FaceMesh già caricato");
         resolve(window.FaceMesh);
         return;
       }
 
+      console.log("📥 Caricamento FaceMesh da CDN...");
       const script = document.createElement("script");
       script.src =
         "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js";
       script.crossOrigin = "anonymous";
       script.onload = () => {
-        console.log("FaceMesh loaded from CDN");
+        console.log("✅ FaceMesh loaded from CDN");
         resolve(window.FaceMesh);
       };
       script.onerror = () => {
+        console.error("❌ Errore caricamento FaceMesh");
         reject(new Error("Impossibile caricare FaceMesh"));
       };
       document.body.appendChild(script);
@@ -43,7 +46,6 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
   const calculateMetrics = (landmarks) => {
     if (!landmarks || landmarks.length === 0) return null;
 
-    // Indici per occhi e bocca
     const LEFT_EYE = [33, 133, 157, 158, 159, 160, 161, 173];
     const RIGHT_EYE = [362, 263, 387, 386, 385, 384, 398, 466];
     const MOUTH = [
@@ -61,24 +63,19 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
     const getEyeOpenness = () => {
       const leftEye = landmarks.filter((_, i) => LEFT_EYE.includes(i));
       const rightEye = landmarks.filter((_, i) => RIGHT_EYE.includes(i));
-
       if (leftEye.length < 4 || rightEye.length < 4) return 50;
-
       const leftOpen = distance(leftEye[0], leftEye[4]);
       const rightOpen = distance(rightEye[0], rightEye[4]);
       const avgOpen = (leftOpen + rightOpen) / 2;
-
       return Math.min(Math.round(avgOpen * 200), 100);
     };
 
     const getMouthTension = () => {
       const mouthPoints = landmarks.filter((_, i) => MOUTH.includes(i));
       if (mouthPoints.length < 4) return 50;
-
       const topLip = mouthPoints[0];
       const bottomLip = mouthPoints[mouthPoints.length - 1];
       const mouthOpen = distance(topLip, bottomLip);
-
       return Math.max(0, Math.min(100, 100 - mouthOpen * 300));
     };
 
@@ -90,9 +87,7 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
     const getHeadPosition = () => {
       const nose = landmarks[1];
       const chin = landmarks[152];
-
       if (!nose || !chin) return { x: 0, y: 0, z: 0 };
-
       return {
         x: Math.round((nose.x - 0.5) * 100),
         y: Math.round((nose.y - 0.5) * 100),
@@ -111,20 +106,24 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
   // Avvia la webcam
   const startCamera = async () => {
     try {
-      setStatusMessage("Avvio webcam...");
+      setStatusMessage("📷 Avvio webcam...");
+      console.log("📷 Tentativo avvio webcam...");
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 },
       });
 
+      console.log("✅ Webcam avviata, stream ottenuto");
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         streamRef.current = stream;
-        console.log("Webcam avviata");
+        console.log("✅ Video in riproduzione");
       }
 
       // Carica FaceMesh
+      console.log("📥 Caricamento FaceMesh...");
       const FaceMesh = await loadFaceMesh();
 
       const faceMesh = new FaceMesh({
@@ -162,7 +161,8 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
 
       faceMeshRef.current = faceMesh;
       setIsCameraReady(true);
-      setStatusMessage('Volto rilevato! Premi "Scansiona"');
+      setStatusMessage('✅ Volto rilevato! Premi "Scansiona"');
+      console.log("✅ FaceMesh pronto e in esecuzione");
 
       // Loop di rilevamento
       const detectLoop = async () => {
@@ -178,9 +178,10 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
 
       detectLoop();
     } catch (error) {
-      console.error("Errore:", error);
+      console.error("❌ Errore avvio webcam:", error);
+      console.error("❌ Dettaglio:", error.message);
       onError("Errore avvio webcam: " + error.message);
-      setStatusMessage("Errore");
+      setStatusMessage("❌ Errore: " + error.message);
     }
   };
 
@@ -195,22 +196,19 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
 
     setIsLoading(true);
     setIsDetecting(true);
-    setStatusMessage("Analisi in corso...");
+    setStatusMessage("🧠 Analisi in corso...");
 
-    // Prendi gli ultimi dati
     const lastMetrics =
       metricsHistoryRef.current[metricsHistoryRef.current.length - 1];
     const lastLandmarks =
       landmarksHistoryRef.current[landmarksHistoryRef.current.length - 1];
 
-    // Simula progresso
     let progress = 0;
     scanIntervalRef.current = setInterval(() => {
       progress += 10;
       setScanProgress(Math.min(progress, 90));
     }, 200);
 
-    // Invia al backend
     const userId = "roberto";
     const sessionId = `session_${Date.now()}`;
 
@@ -227,12 +225,8 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
         setTimeout(() => {
           setIsLoading(false);
           setIsDetecting(false);
-          setStatusMessage("Scansione completata!");
-
-          // Ferma la webcam
+          setStatusMessage("✅ Scansione completata!");
           stopCamera();
-
-          // Passa al risultato
           onScanComplete(result);
         }, 500);
       })
@@ -241,23 +235,28 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
         setIsLoading(false);
         setIsDetecting(false);
         onError("Errore scansione: " + error.message);
-        setStatusMessage("Errore");
+        setStatusMessage("❌ Errore scansione");
       });
   };
 
   const stopCamera = () => {
+    console.log("🛑 Fermo webcam...");
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
     if (faceMeshRef.current) {
       faceMeshRef.current.close();
+      faceMeshRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setIsCameraReady(false);
+    setStatusMessage("📷 Webcam fermata");
   };
 
   useEffect(() => {
@@ -274,6 +273,7 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       <div className="camera-wrapper">
         {!isCameraReady ? (
           <div className="camera-placeholder">
+            <div className="icon">📷</div>
             <p style={{ color: "#6b7280", fontSize: "1.1rem" }}>
               Attiva la webcam per iniziare
             </p>
@@ -310,7 +310,7 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
                   <span>Analisi in corso {scanProgress}%</span>
                 </>
               ) : (
-                "Volto rilevato"
+                "✅ Volto rilevato"
               )}
             </div>
           </>
@@ -320,7 +320,7 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
       <div className="camera-controls">
         {!isCameraReady ? (
           <button className="btn-neon" onClick={startCamera}>
-            Attiva Webcam
+            📷 Attiva Webcam
           </button>
         ) : (
           <>
@@ -338,7 +338,7 @@ const ScanFace = ({ onScanComplete, onError, isLoading, setIsLoading }) => {
               style={{ borderColor: "#ef4444", color: "#ef4444" }}
               disabled={isLoading}
             >
-              Ferma
+              🛑 Ferma
             </button>
           </>
         )}

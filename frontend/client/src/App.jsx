@@ -1,14 +1,20 @@
 import React, { useState } from "react";
 import ScanFace from "./components/ScanFace";
 import MoodResult from "./components/MoodResult";
-// import PlaylistDisplay from "./components/PlaylistDisplay";
+import PlaylistDisplay from "./components/PlaylistDisplay";
 
 function App() {
+  const [userId, setUserId] = useState(null);
   const [scanResult, setScanResult] = useState(null);
   const [playlist, setPlaylist] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState("scan");
   const [error, setError] = useState(null);
+
+  const handleUserReady = (name) => {
+    setUserId(name);
+    setCurrentStep("scan");
+  };
 
   const handleScanComplete = (result) => {
     setScanResult(result);
@@ -33,20 +39,22 @@ function App() {
     setTimeout(() => setError(null), 5000);
   };
 
+  const getSubtitle = () => {
+    if (currentStep === "setup") return "La tua playlist, in base al tuo umore";
+    if (currentStep === "scan") return `Ciao ${userId}! Scansiona il tuo umore`;
+    if (currentStep === "mood") return "Ecco il tuo umore!";
+    if (currentStep === "playlist") return "La tua playlist personalizzata";
+    return "";
+  };
+
   return (
     <>
       <div className="app-container">
-        {/* Header */}
         <header className="app-header glass-card">
           <h1 className="app-title neon-text">🎵 MoodMix</h1>
-          <p className="app-subtitle">
-            {currentStep === "scan" && "Scansiona il tuo umore"}
-            {currentStep === "mood" && "Ecco il tuo umore!"}
-            {currentStep === "playlist" && "La tua playlist personalizzata"}
-          </p>
+          <p className="app-subtitle">{getSubtitle()}</p>
         </header>
 
-        {/* Main content */}
         <main className="app-main">
           {error && (
             <div className="error-banner">
@@ -55,8 +63,11 @@ function App() {
             </div>
           )}
 
+          {currentStep === "setup" && <UserSetup onReady={handleUserReady} />}
+
           {currentStep === "scan" && (
             <ScanFace
+              userId={userId}
               onScanComplete={handleScanComplete}
               onError={showError}
               isLoading={isLoading}
@@ -66,6 +77,7 @@ function App() {
 
           {currentStep === "mood" && scanResult && (
             <MoodResult
+              userId={userId}
               scanResult={scanResult}
               onGeneratePlaylist={handlePlaylistGenerated}
               onReset={handleReset}
