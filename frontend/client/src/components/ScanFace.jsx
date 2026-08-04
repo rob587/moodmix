@@ -180,7 +180,7 @@ const ScanFace = ({
     const sessionId = `session_${Date.now()}`;
 
     analyzeEmotion({
-      userId,
+      userId: String(userId),
       landmarks: lastLandmarks.map((l) => [l.x, l.y, l.z]),
       sessionId,
       metrics: lastMetrics,
@@ -191,7 +191,7 @@ const ScanFace = ({
         setTimeout(() => {
           setIsLoading(false);
           setIsDetecting(false);
-          setStatusMessage("Scansione completata!");
+          setStatusMessage("✅ Scansione completata!");
           stopCamera();
           onScanComplete(result);
         }, 500);
@@ -201,7 +201,7 @@ const ScanFace = ({
         setIsLoading(false);
         setIsDetecting(false);
         onError("Errore scansione: " + error.message);
-        setStatusMessage("Errore scansione");
+        setStatusMessage("❌ Errore scansione");
       });
   };
 
@@ -230,7 +230,8 @@ const ScanFace = ({
   return (
     <div className="camera-container">
       <div className="camera-wrapper">
-        {!isCameraReady ? (
+        {/* Placeholder visibile solo quando camera non è pronta */}
+        {!isCameraReady && (
           <div className="camera-placeholder">
             <div className="icon">📷</div>
             <p style={{ color: "#6b7280", fontSize: "1.1rem" }}>
@@ -240,39 +241,41 @@ const ScanFace = ({
               Inquadra il tuo viso per la scansione
             </p>
           </div>
-        ) : (
-          <>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-                backgroundColor: "#111",
-              }}
-            />
-            <div className="camera-overlay">
-              {isDetecting ? (
-                <>
-                  <div
-                    className="spinner"
-                    style={{
-                      width: "30px",
-                      height: "30px",
-                      margin: "0 auto 10px",
-                    }}
-                  ></div>
-                  <span>Analisi in corso {scanProgress}%</span>
-                </>
-              ) : (
-                "✅ Volto rilevato"
-              )}
-            </div>
-          </>
+        )}
+
+        {/* Video SEMPRE nel DOM, nascosto finché non è pronto */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: isCameraReady ? "block" : "none",
+            backgroundColor: "#111",
+          }}
+        />
+
+        {isCameraReady && (
+          <div className="camera-overlay">
+            {isDetecting ? (
+              <>
+                <div
+                  className="spinner"
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                    margin: "0 auto 10px",
+                  }}
+                ></div>
+                <span>Analisi in corso {scanProgress}%</span>
+              </>
+            ) : (
+              "✅ Volto rilevato"
+            )}
+          </div>
         )}
       </div>
 
