@@ -7,6 +7,31 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+const getDefaultGenre = (mood) => {
+  const map = {
+    stressato: "Lo-fi/Chill",
+    concentrato: "Classica",
+    entusiasta: "Dance/EDM",
+    stanco: "Ambient",
+    rilassato: "Bossa Nova",
+    teso: "Rock",
+    neutrale: "Pop",
+  };
+  return map[mood] || "Pop";
+};
+
+const parseMoodResponse = (content) => {
+  const descriptionMatch = content.match(/DESCRIZIONE:\s*(.+?)(?=\n\d|$)/s);
+  const genreMatch = content.match(/GENERE SUGGERITO:\s*(.+?)(?=\n\d|$)/s);
+  const motivationMatch = content.match(/MOTIVAZIONE:\s*(.+?)(?=\n\d|$)/s);
+
+  return {
+    description: descriptionMatch?.[1]?.trim() || "",
+    suggestedGenre: genreMatch?.[1]?.trim() || "Pop",
+    motivation: motivationMatch?.[1]?.trim() || "",
+  };
+};
+
 export async function generateMoodDescription(userId, analysis) {
   const { stress, focus, energy, valence, mood } = analysis;
 

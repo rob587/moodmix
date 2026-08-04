@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import ScanFace from "./components/ScanFace";
 import MoodResult from "./components/MoodResult";
 import PlaylistDisplay from "./components/PlaylistDisplay";
+import UserSetup from "./components/UserSetup";
 
 function App() {
   const [userId, setUserId] = useState(null);
   const [scanResult, setScanResult] = useState(null);
   const [playlist, setPlaylist] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState("scan");
+  const [currentStep, setCurrentStep] = useState("setup");
   const [error, setError] = useState(null);
 
   const handleUserReady = (name) => {
