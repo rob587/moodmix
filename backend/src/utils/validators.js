@@ -29,7 +29,10 @@ export const playlistSchema = Joi.object({
       "neutrale",
     )
     .required(),
-  scanId: Joi.string().uuid().optional(),
+  scanId: Joi.alternatives()
+    .try(Joi.number().integer(), Joi.string().uuid())
+    .optional()
+    .allow(null),
 });
 
 export const historySchema = Joi.object({
