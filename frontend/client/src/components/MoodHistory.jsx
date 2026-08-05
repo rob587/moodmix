@@ -57,7 +57,25 @@ const MetricBar = ({ label, value, color }) => (
   </div>
 );
 
-const MoodHistory = () => {
+const MoodHistory = ({ userId, onClose }) => {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(null);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const data = await getHistory(userId);
+        setHistory(data.history || []);
+      } catch (err) {
+        setError("Impossibile caricare lo storico");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, [userId]);
   return <div></div>;
 };
 
