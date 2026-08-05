@@ -11,30 +11,26 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState("setup");
   const [error, setError] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleUserReady = (name) => {
     setUserId(name);
     setCurrentStep("scan");
   };
-
   const handleScanComplete = (result) => {
     setScanResult(result);
     setCurrentStep("mood");
   };
-
   const handlePlaylistGenerated = (playlistData) => {
     setPlaylist(playlistData);
     setCurrentStep("playlist");
   };
-
-  // Reset completo
   const handleReset = () => {
     setScanResult(null);
     setPlaylist(null);
     setCurrentStep("scan");
     setError(null);
   };
-
   const showError = (message) => {
     setError(message);
     setTimeout(() => setError(null), 5000);
@@ -52,8 +48,47 @@ function App() {
     <>
       <div className="app-container">
         <header className="app-header glass-card">
-          <h1 className="app-title neon-text">🎵 MoodMix</h1>
-          <p className="app-subtitle">{getSubtitle()}</p>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <h1 className="app-title neon-text">🎵 MoodMix</h1>
+              <p className="app-subtitle">{getSubtitle()}</p>
+            </div>
+            {userId && currentStep !== "setup" && (
+              <button
+                onClick={() => setShowHistory(true)}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "10px",
+                  color: "#9ca3af",
+                  cursor: "pointer",
+                  padding: "8px 14px",
+                  fontSize: "0.85rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.2s",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.09)";
+                  e.currentTarget.style.color = "#f3f4f6";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                  e.currentTarget.style.color = "#9ca3af";
+                }}
+              >
+                📊 Storico
+              </button>
+            )}
+          </div>
         </header>
 
         <main className="app-main">
@@ -63,9 +98,7 @@ function App() {
               <button onClick={() => setError(null)}>✕</button>
             </div>
           )}
-
           {currentStep === "setup" && <UserSetup onReady={handleUserReady} />}
-
           {currentStep === "scan" && (
             <ScanFace
               userId={userId}
@@ -75,7 +108,6 @@ function App() {
               setIsLoading={setIsLoading}
             />
           )}
-
           {currentStep === "mood" && scanResult && (
             <MoodResult
               userId={userId}
@@ -87,7 +119,6 @@ function App() {
               onError={showError}
             />
           )}
-
           {currentStep === "playlist" && playlist && (
             <PlaylistDisplay playlist={playlist} onReset={handleReset} />
           )}
@@ -97,6 +128,10 @@ function App() {
           <p>MoodMix — Scansiona il volto, ascolta la tua playlist</p>
         </footer>
       </div>
+
+      {showHistory && userId && (
+        <MoodHistory userId={userId} onClose={() => setShowHistory(false)} />
+      )}
     </>
   );
 }
