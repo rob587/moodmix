@@ -3,6 +3,7 @@ import ScanFace from "./components/ScanFace";
 import MoodResult from "./components/MoodResult";
 import PlaylistDisplay from "./components/PlaylistDisplay";
 import UserSetup from "./components/UserSetup";
+import MoodHistory from "./components/MoodHistory";
 
 function App() {
   const [userId, setUserId] = useState(null);
